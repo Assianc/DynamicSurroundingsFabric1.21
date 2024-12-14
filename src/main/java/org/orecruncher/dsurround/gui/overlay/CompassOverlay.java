@@ -2,118 +2,88 @@ package org.orecruncher.dsurround.gui.overlay;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.orecruncher.dsurround.Constants;
-import org.orecruncher.dsurround.Configuration;
-import org.orecruncher.dsurround.config.libraries.ITagLibrary;
 import org.orecruncher.dsurround.lib.GameUtils;
-import org.orecruncher.dsurround.tags.ItemEffectTags;
+import org.orecruncher.dsurround.lib.gui.ColorPalette;
+import org.orecruncher.dsurround.lib.util.ResourceUtils;
 
-public class CompassOverlay extends AbstractOverlay {
+public class CompassOverlay {
+    private static final ResourceLocation COMPASS_TEXTURE = ResourceUtils.createResourceLocation(Constants.MOD_ID, "textures/compass.png");
+    private static final float TEXTURE_SIZE = 256F;
+    private static final float TEXTURE_HALF = TEXTURE_SIZE / 2F;
+    private static final float TEXTURE_QUARTER = TEXTURE_SIZE / 4F;
 
-    // Vertical offset to avoid writing over the cross-hair
-    private static final int CROSSHAIR_OFFSET = 60;
+    private final float width;
+    private final float height;
+    private final float halfWidth;
+    private final float halfHeight;
 
-    // Width and height of the actual band in the texture. The texture is 512x512 but the actual
-    // rendering is smaller.
-    private static final int TEXTURE_SIZE = 512;
-    private static final float BAND_WIDTH = 65F * 2;
-    private static final float BAND_HEIGHT = 12F * 2;
-    private static final float TEXTURE_SIZE_F = (float)TEXTURE_SIZE;
-    private static final int HALF_TEXTURE_SIZE = TEXTURE_SIZE / 2;
-    private static final ResourceLocation COMPASS_TEXTURE = new ResourceLocation(Constants.MOD_ID, "textures/compass.png");
-
-    private final ITagLibrary tagLibrary;
-    private final Configuration config;
-    private boolean showCompass;
-    private float scale;
-    private float spriteOffset;
-
-    public CompassOverlay(Configuration config, ITagLibrary tagLibrary) {
-        this.tagLibrary = tagLibrary;
-        this.config = config;
-        this.showCompass = false;
-        this.spriteOffset = this.config.compassAndClockOptions.compassStyle.getSpriteNumber();
-        this.scale = (float)this.config.compassAndClockOptions.scale;
+    public CompassOverlay(float width, float height) {
+        this.width = width;
+        this.height = height;
+        this.halfWidth = width / 2F;
+        this.halfHeight = height / 2F;
     }
 
-    public void tick(Minecraft client) {
-        this.showCompass = false;
-
-        if (this.config.compassAndClockOptions.enableCompass && GameUtils.isInGame()) {
-            this.scale = (float) this.config.compassAndClockOptions.scale;
-            this.spriteOffset = this.config.compassAndClockOptions.compassStyle.getSpriteNumber();
-
-            var player = GameUtils.getPlayer().orElseThrow();
-            var mainHandItem = player.getMainHandItem();
-            var offHandItem = player.getOffhandItem();
-            this.showCompass = this.doShowCompass(mainHandItem) || this.doShowCompass(offHandItem);
-        }
-    }
-
-    private boolean doShowCompass(ItemStack stack) {
-        return this.tagLibrary.is(ItemEffectTags.COMPASSES, stack);
-    }
-
-    @Override
-    public void render(GuiGraphics context, float partialTick) {
-        if (!this.showCompass)
+    public void render(GuiGraphics graphics, float partialTicks) {
+        var player = GameUtils.getPlayer().orElse(null);
+        if (player == null)
             return;
 
-        var matrixStack = context.pose();
+        var mc = GameUtils.getMC();
+        var window = mc.getWindow();
 
-        try {
+        float angle = 180F - Mth.wrapDegrees(player.getYRot());
+        float scale = 1.0F;
 
-            matrixStack.pushPose();
+        float x = window.getGuiScaledWidth() / 2F;
+        float y = 12F;
+        float z = 0F;
 
-            final var player = GameUtils.getPlayer().orElseThrow();
-
-            int direction = Mth.floor(((player.getViewYRot(partialTick) * TEXTURE_SIZE) / 360F) + 0.5D) & (TEXTURE_SIZE - 1);
-            float x = (context.guiWidth() - BAND_WIDTH * this.scale) / 2F;
-            float y = (context.guiHeight() - CROSSHAIR_OFFSET - BAND_HEIGHT * this.scale) / 2F;
-
-            matrixStack.scale(this.scale, this.scale, 0F);
-            x /= this.scale;
-            y /= this.scale;
-
-            float v = this.spriteOffset * (BAND_HEIGHT * 2);
-
-            if (direction >= HALF_TEXTURE_SIZE) {
-                direction -= HALF_TEXTURE_SIZE;
-                v += BAND_HEIGHT;
-            }
-
-            this.drawTexture(matrixStack, COMPASS_TEXTURE, x, y, direction, v, BAND_WIDTH, BAND_HEIGHT);
-
-        } finally {
-            matrixStack.popPose();
-        }
-    }
-
-    public void drawTexture(PoseStack stack, ResourceLocation texture, float x, float y, float u, float v, float width, float height) {
-        this.drawTexture(stack, texture, x, x + width, y, y + height, width, height, u, v);
-    }
-
-    void drawTexture(PoseStack stack, ResourceLocation texture, float x1, float x2, float y1, float y2, float regionWidth, float regionHeight, float u, float v) {
-        this.drawTexturedQuad(stack, texture, x1, x2, y1, y2, (float) 0, u / TEXTURE_SIZE_F, (u + regionWidth) / TEXTURE_SIZE_F, v / TEXTURE_SIZE_F, (v + regionHeight) / TEXTURE_SIZE_F);
-    }
-
-    void drawTexturedQuad(PoseStack stack, ResourceLocation texture, float x1, float x2, float y1, float y2, float z, float u1, float u2, float v1, float v2) {
-        RenderSystem.setShaderTexture(0, texture);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        Matrix4f matrix4f = stack.last().pose();
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+        RenderSystem.setShaderTexture(0, COMPASS_TEXTURE);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
+        var pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(x, y, z);
+        pose.scale(scale, scale, 1F);
+
+        // Draw the base texture
+        drawTexturedRect(pose.last().pose(), -this.halfWidth, -this.halfHeight, this.width, this.height,
+                TEXTURE_QUARTER, 0F, TEXTURE_HALF, TEXTURE_QUARTER);
+
+        // Draw the sliding part
+        float slideX = -this.halfWidth - (angle / 180F * TEXTURE_HALF / 2F);
+        drawTexturedRect(pose.last().pose(), slideX, -this.halfHeight, TEXTURE_SIZE, this.height,
+                0F, TEXTURE_QUARTER, TEXTURE_SIZE, TEXTURE_HALF);
+
+        pose.popPose();
+
+        // Draw the pointer
+        drawTexturedRect(pose.last().pose(), x - 3F, y - 3F, 6F, 6F,
+                TEXTURE_QUARTER + 24F, 0F, TEXTURE_QUARTER + 30F, 6F);
+    }
+
+    private static void drawTexturedRect(Matrix4f matrix4f, float x1, float y1, float width, float height,
+                                       float u1, float v1, float u2, float v2) {
+        float x2 = x1 + width;
+        float y2 = y1 + height;
+        float z = 0F;
+
+        var bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        bufferBuilder.vertex(matrix4f, x1, y1, z).uv(u1, v1).endVertex();
-        bufferBuilder.vertex(matrix4f, x1, y2, z).uv(u1, v2).endVertex();
-        bufferBuilder.vertex(matrix4f, x2, y2, z).uv(u2, v2).endVertex();
-        bufferBuilder.vertex(matrix4f, x2, y1, z).uv(u2, v1).endVertex();
+        bufferBuilder.vertex(matrix4f, x1, y2, z).uv(u1 / TEXTURE_SIZE, v2 / TEXTURE_SIZE).endVertex();
+        bufferBuilder.vertex(matrix4f, x2, y2, z).uv(u2 / TEXTURE_SIZE, v2 / TEXTURE_SIZE).endVertex();
+        bufferBuilder.vertex(matrix4f, x2, y1, z).uv(u2 / TEXTURE_SIZE, v1 / TEXTURE_SIZE).endVertex();
+        bufferBuilder.vertex(matrix4f, x1, y1, z).uv(u1 / TEXTURE_SIZE, v1 / TEXTURE_SIZE).endVertex();
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 }

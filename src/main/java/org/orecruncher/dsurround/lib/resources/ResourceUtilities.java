@@ -26,7 +26,13 @@ public final class ResourceUtilities {
     ResourceUtilities(IModLog modLog, IMinecraftDirectories minecraftDirectories, IPlatform platform, ResourceManager resourceManager) {
         this.logger = modLog;
         this.modConfigHelper = new ModConfigResourceFinder(this.logger, resourceManager, "dsconfigs");
-        this.diskResourceHelper = new DiskResourceFinder(this.logger, platform, minecraftDirectories.getModDataDirectory());
+        this.diskResourceHelper = new DiskResourceFinder(
+            this.logger,
+            platform,
+            minecraftDirectories.getModDataDirectory(),
+            Constants.MOD_ID,
+            "config"
+        );
         this.resourceFinder = new ClientResourceFinder(this.logger, resourceManager);
         this.packResourceFinder = new ServerResourceFinder(this.logger, platform);
     }
@@ -81,7 +87,7 @@ public final class ResourceUtilities {
      */
     public Collection<TagFile> findClientTagFiles(TagKey<?> tagKey) {
         var result = new ObjectArray<DiscoveredResource<TagFile>>();
-        var tagDir = TagManager.getTagDir(tagKey.registry());
+        var tagDir = "tags/" + tagKey.registry().location().getPath();
         var tagFolder = "%s/%s".formatted(tagDir, tagKey.location().getPath());
         var tagFolderPack = "%s:%s".formatted(tagKey.location().getNamespace(), tagFolder);
         result.addAll(this.packResourceFinder.find(TagFile.CODEC, tagFolderPack));

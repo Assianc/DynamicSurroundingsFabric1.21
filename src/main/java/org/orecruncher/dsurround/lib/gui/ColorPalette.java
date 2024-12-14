@@ -1,122 +1,149 @@
 package org.orecruncher.dsurround.lib.gui;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.util.Mth;
 
-@SuppressWarnings("unused")
 public final class ColorPalette {
-    // Branding colors
-    public static final TextColor CURSEFORGE = of("#f16436");
-    public static final TextColor MODRINTH = of("#1bd96a");
+    private ColorPalette() {}
 
-    // Minecraft colors mapped to codes
-    public static final TextColor MC_BLACK = of(ChatFormatting.BLACK);
-    public static final TextColor MC_DARKBLUE = of(ChatFormatting.DARK_BLUE);
-    public static final TextColor MC_DARKGREEN = of(ChatFormatting.DARK_GREEN);
-    public static final TextColor MC_DARKAQUA = of(ChatFormatting.DARK_AQUA);
-    public static final TextColor MC_DARKRED = of(ChatFormatting.DARK_RED);
-    public static final TextColor MC_DARKPURPLE = of(ChatFormatting.DARK_PURPLE);
-    public static final TextColor MC_GOLD = of(ChatFormatting.GOLD);
-    public static final TextColor MC_GRAY = of(ChatFormatting.GRAY);
-    public static final TextColor MC_DARKGRAY = of(ChatFormatting.DARK_GRAY);
-    public static final TextColor MC_BLUE = of(ChatFormatting.BLUE);
-    public static final TextColor MC_GREEN = of(ChatFormatting.GREEN);
-    public static final TextColor MC_AQUA = of(ChatFormatting.AQUA);
-    public static final TextColor MC_RED = of(ChatFormatting.RED);
-    public static final TextColor MC_LIGHTPURPLE = of(ChatFormatting.LIGHT_PURPLE);
-    public static final TextColor MC_YELLOW = of(ChatFormatting.YELLOW);
-    public static final TextColor MC_WHITE = of(ChatFormatting.WHITE);
+    public static final TextColor WHITE = parse("#FFFFFF");
+    public static final TextColor BLACK = parse("#000000");
+    public static final TextColor RED = parse("#FF0000");
+    public static final TextColor GREEN = parse("#00FF00");
+    public static final TextColor BLUE = parse("#0000FF");
+    public static final TextColor YELLOW = parse("#FFFF00");
+    public static final TextColor PURPLE = parse("#FF00FF");
+    public static final TextColor CYAN = parse("#00FFFF");
+    public static final TextColor GRAY = parse("#808080");
+    public static final TextColor GOLD = parse("#FFD700");
+    public static final TextColor BRASS = parse("#B5A642");
+    public static final TextColor COPPER = parse("#B87333");
+    public static final TextColor BRONZE = parse("#CD7F32");
+    public static final TextColor SILVER = parse("#C0C0C0");
+    public static final TextColor AQUAMARINE = parse("#7FFFD4");
+    public static final TextColor TURQUOISE = parse("#40E0D0");
+    public static final TextColor SLATE_GRAY = parse("#708090");
+    public static final TextColor FOREST_GREEN = parse("#228B22");
+    public static final TextColor SEA_GREEN = parse("#2E8B57");
+    public static final TextColor LIME = parse("#00FF00");
+    public static final TextColor ANTIQUE_WHITE = parse("#FAEBD7");
+    public static final TextColor PEACH = parse("#FFE5B4");
+    public static final TextColor APRICOT = parse("#FBCEB1");
+    public static final TextColor WHEAT = parse("#F5DEB3");
+    public static final TextColor CORN_SILK = parse("#FFF8DC");
+    public static final TextColor LEMON_CHIFFON = parse("#FFFACD");
+    public static final TextColor LIGHT_YELLOW = parse("#FFFFE0");
+    public static final TextColor CORAL = parse("#FF7F50");
+    public static final TextColor ORANGE = parse("#FFA500");
+    public static final TextColor SALMON = parse("#FA8072");
+    public static final TextColor PUMPKIN_ORANGE = parse("#FF7518");
+    public static final TextColor TOMATO = parse("#FF6347");
+    public static final TextColor ORCHID = parse("#DA70D6");
+    public static final TextColor PLUM = parse("#DDA0DD");
+    public static final TextColor MEDIUM_VIOLET_RED = parse("#C71585");
+    public static final TextColor DEEP_PINK = parse("#FF1493");
+    public static final TextColor HOT_PINK = parse("#FF69B4");
+    public static final TextColor PINK = parse("#FFC0CB");
+    public static final TextColor ROSY_BROWN = parse("#BC8F8F");
+    public static final TextColor BROWN = parse("#A52A2A");
+    public static final TextColor MAROON = parse("#800000");
+    public static final TextColor INDIAN_RED = parse("#CD5C5C");
+    public static final TextColor DARK_KHAKI = parse("#BDB76B");
+    public static final TextColor GOLDENROD = parse("#DAA520");
+    public static final TextColor DARK_GOLDENROD = parse("#B8860B");
+    public static final TextColor CHOCOLATE = parse("#D2691E");
+    public static final TextColor SADDLE_BROWN = parse("#8B4513");
+    public static final TextColor SIENNA = parse("#A0522D");
+    public static final TextColor PERU = parse("#CD853F");
+    public static final TextColor DARK_OLIVE_GREEN = parse("#556B2F");
+    public static final TextColor OLIVE_DRAB = parse("#6B8E23");
+    public static final TextColor OLIVE = parse("#808000");
+    public static final TextColor DARK_GREEN = parse("#006400");
+    public static final TextColor MEDIUM_SEA_GREEN = parse("#3CB371");
+    public static final TextColor LIME_GREEN = parse("#32CD32");
+    public static final TextColor SPRING_GREEN = parse("#00FF7F");
+    public static final TextColor MEDIUM_SPRING_GREEN = parse("#00FA9A");
+    public static final TextColor DARK_TURQUOISE = parse("#00CED1");
+    public static final TextColor PALE_TURQUOISE = parse("#AFEEEE");
+    public static final TextColor POWDER_BLUE = parse("#B0E0E6");
+    public static final TextColor LIGHT_BLUE = parse("#ADD8E6");
+    public static final TextColor SKY_BLUE = parse("#87CEEB");
+    public static final TextColor LIGHT_SKY_BLUE = parse("#87CEFA");
+    public static final TextColor DEEP_SKY_BLUE = parse("#00BFFF");
+    public static final TextColor DODGER_BLUE = parse("#1E90FF");
+    public static final TextColor CORNFLOWER_BLUE = parse("#6495ED");
+    public static final TextColor STEEL_BLUE = parse("#4682B4");
+    public static final TextColor ROYAL_BLUE = parse("#4169E1");
+    public static final TextColor BLUE_VIOLET = parse("#8A2BE2");
+    public static final TextColor DARK_VIOLET = parse("#9400D3");
+    public static final TextColor DARK_ORCHID = parse("#9932CC");
+    public static final TextColor DARK_MAGENTA = parse("#8B008B");
+    public static final TextColor PURPLE_2 = parse("#800080");
+    public static final TextColor INDIGO = parse("#4B0082");
+    public static final TextColor DARK_SLATE_BLUE = parse("#483D8B");
+    public static final TextColor SLATE_BLUE = parse("#6A5ACD");
+    public static final TextColor MEDIUM_SLATE_BLUE = parse("#7B68EE");
+    public static final TextColor MEDIUM_PURPLE = parse("#9370DB");
+    public static final TextColor THISTLE = parse("#D8BFD8");
+    public static final TextColor PLUM_2 = parse("#DDA0DD");
+    public static final TextColor VIOLET = parse("#EE82EE");
+    public static final TextColor MAGENTA = parse("#FF00FF");
+    public static final TextColor ORCHID_2 = parse("#DA70D6");
+    public static final TextColor MEDIUM_ORCHID = parse("#BA55D3");
+    public static final TextColor DARK_ORCHID_2 = parse("#9932CC");
+    public static final TextColor DARK_VIOLET_2 = parse("#9400D3");
+    public static final TextColor BLUE_VIOLET_2 = parse("#8A2BE2");
+    public static final TextColor MEDIUM_BLUE = parse("#0000CD");
+    public static final TextColor DARK_BLUE = parse("#00008B");
+    public static final TextColor NAVY = parse("#000080");
+    public static final TextColor MIDNIGHT_BLUE = parse("#191970");
+    public static final TextColor CORNSILK = parse("#FFF8DC");
+    public static final TextColor BLANCHED_ALMOND = parse("#FFEBCD");
+    public static final TextColor BISQUE = parse("#FFE4C4");
+    public static final TextColor NAVAJO_WHITE = parse("#FFDEAD");
+    public static final TextColor WHEAT_2 = parse("#F5DEB3");
+    public static final TextColor BURLYWOOD = parse("#DEB887");
+    public static final TextColor TAN = parse("#D2B48C");
+    public static final TextColor ROSY_BROWN_2 = parse("#BC8F8F");
+    public static final TextColor SANDY_BROWN = parse("#F4A460");
+    public static final TextColor GOLDENROD_2 = parse("#DAA520");
+    public static final TextColor DARK_GOLDENROD_2 = parse("#B8860B");
+    public static final TextColor PERU_2 = parse("#CD853F");
+    public static final TextColor CHOCOLATE_2 = parse("#D2691E");
+    public static final TextColor SADDLE_BROWN_2 = parse("#8B4513");
+    public static final TextColor SIENNA_2 = parse("#A0522D");
+    public static final TextColor BROWN_2 = parse("#A52A2A");
+    public static final TextColor MAROON_2 = parse("#800000");
+    public static final TextColor WHITE_2 = parse("#FFFFFF");
+    public static final TextColor SNOW = parse("#FFFAFA");
+    public static final TextColor HONEYDEW = parse("#F0FFF0");
+    public static final TextColor MINT_CREAM = parse("#F5FFFA");
+    public static final TextColor AZURE = parse("#F0FFFF");
+    public static final TextColor ALICE_BLUE = parse("#F0F8FF");
+    public static final TextColor GHOST_WHITE = parse("#F8F8FF");
+    public static final TextColor WHITE_SMOKE = parse("#F5F5F5");
+    public static final TextColor SEASHELL = parse("#FFF5EE");
+    public static final TextColor BEIGE = parse("#F5F5DC");
+    public static final TextColor OLD_LACE = parse("#FDF5E6");
+    public static final TextColor FLORAL_WHITE = parse("#FFFAF0");
+    public static final TextColor IVORY = parse("#FFFFF0");
+    public static final TextColor ANTIQUE_WHITE_2 = parse("#FAEBD7");
+    public static final TextColor LINEN = parse("#FAF0E6");
+    public static final TextColor LAVENDER_BLUSH = parse("#FFF0F5");
+    public static final TextColor MISTY_ROSE = parse("#FFE4E1");
+    public static final TextColor GAINSBORO = parse("#DCDCDC");
+    public static final TextColor LIGHT_GRAY = parse("#D3D3D3");
+    public static final TextColor SILVER_2 = parse("#C0C0C0");
+    public static final TextColor DARK_GRAY = parse("#A9A9A9");
+    public static final TextColor GRAY_2 = parse("#808080");
+    public static final TextColor DIM_GRAY = parse("#696969");
+    public static final TextColor LIGHT_SLATE_GRAY = parse("#778899");
+    public static final TextColor SLATE_GRAY_2 = parse("#708090");
+    public static final TextColor DARK_SLATE_GRAY = parse("#2F4F4F");
+    public static final TextColor BLACK_2 = parse("#000000");
+    public static final TextColor KEY_LIME = parse("#E8F48C");
+    public static final TextColor RASPBERRY = parse("#E30B5D");
 
-    public static final TextColor CRIMSON = of("#8D230F");
-
-    public static final TextColor RED = of(255, 0, 0);
-    public static final TextColor ORANGE = of(255, 127, 0);
-    public static final TextColor YELLOW = of(255, 255, 0);
-    public static final TextColor LGREEN = of(127, 255, 0);
-    public static final TextColor GREEN = of(0, 255, 0);
-    public static final TextColor TURQUOISE = of(0, 255, 127);
-    public static final TextColor CYAN = of(0, 255, 255);
-    public static final TextColor AQUAMARINE = of(127,255,212);
-    public static final TextColor BLUE = of(0, 0, 255);
-    public static final TextColor VIOLET = of(127, 0, 255);
-    public static final TextColor MAGENTA = of(255, 0, 255);
-    public static final TextColor RASPBERRY = of(255, 0, 127);
-    public static final TextColor BLACK = of(0, 0, 0);
-    public static final TextColor WHITE = of(255, 255, 255);
-    public static final TextColor PURPLE = of(80, 0, 80);
-    public static final TextColor INDIGO = of(75, 0, 130);
-    public static final TextColor NAVY = of(0, 0, 128);
-    public static final TextColor TAN = of(210, 180, 140);
-    public static final TextColor GOLD = of(255, 215, 0);
-    public static final TextColor GRAY = of(128, 128, 128);
-    public static final TextColor LGRAY = of(192, 192, 192);
-    public static final TextColor SLATEGRAY = of(112, 128, 144);
-    public static final TextColor DARKSLATEGRAY = of(47, 79, 79);
-    public static final TextColor SILVER_SAND = of(191,193,194);
-    public static final TextColor SUN_GLOW = of(255,204,51);
-    public static final TextColor CORN_FLOWER_BLUE = of(100,149,237);
-    public static final TextColor APRICOT = of(251,206,177);
-    public static final TextColor KEY_LIME = of(232,244,140);
-    public static final TextColor BRIGHT_CERULEAN = of(29,172,214);
-    public static final TextColor BURNT_UMBER = of(110, 38, 14);
-    public static final TextColor GOLDENROD = of(218, 165, 32);
-    public static final TextColor WHEAT = of(245, 222, 179);
-    public static final TextColor PUMPKIN_ORANGE = of(255, 117, 24);
-    public static final TextColor DESERT = of(250, 213, 165);
-    public static final TextColor CORNSILK = of(255, 248, 220);
-    public static final TextColor BRASS = of(225, 193, 110);
-    public static final TextColor ECRU = of(194, 178, 128);
-    public static final TextColor SEASHELL = of(255, 245, 238);
-    public static final TextColor ORCHID = of(218,112,214);
-    public static final TextColor PALE_BROWN = of(152,118,84);
-    public static final TextColor DARK_VIOLET = of(148,0,211);
-    public static final TextColor ANTIQUE_WHITE = of(250,235,215);
-    public static final TextColor PEARLY_PURPLE = of(183,104,162);
-    public static final TextColor FRESH_AIR = of(166,231,255);
-
-    public static int getRed(int rgb) {
-        return (rgb >> 16) & 0xFF;
-    }
-
-    public static int getGreen(int rgb) {
-        return (rgb >> 8) & 0xFF;
-    }
-
-    public static int getBlue(int rgb) {
-        return rgb & 0xFF;
-    }
-
-    private static TextColor of(ChatFormatting formatColor) {
-        return TextColor.fromLegacyFormat(formatColor);
-    }
-
-    private static TextColor of(String formatColor) {
-        return TextColor.parseColor(formatColor).getOrThrow(false, (msg)-> {});
-    }
-
-    private static TextColor of(int red, int green, int blue) {
-        return TextColor.fromRgb(toRGB(red, green, blue));
-    }
-
-    static int toRGB(int red, int green, int blue) {
-        return ((red & 0xFF) << 16) |
-                ((green & 0xFF) << 8)  |
-                ((blue & 0xFF));
-    }
-
-    public static TextColor lerp(float scale, TextColor start, TextColor end) {
-        var startRed = getRed(start.getValue());
-        var startGreen = getGreen(start.getValue());
-        var startBlue = getBlue(start.getValue());
-        var endRed = getRed(end.getValue());
-        var endGreen = getGreen(end.getValue());
-        var endBlue = getBlue(end.getValue());
-
-        var red = (int)Mth.lerp(scale, startRed, endRed);
-        var green = (int)Mth.lerp(scale, startGreen, endGreen);
-        var blue = (int)Mth.lerp(scale, startBlue, endBlue);
-
-        return of(red, green, blue);
+    private static TextColor parse(String formatColor) {
+        return TextColor.parseColor(formatColor).result().orElseThrow();
     }
 }

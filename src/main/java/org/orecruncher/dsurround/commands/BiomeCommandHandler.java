@@ -13,8 +13,8 @@ import org.orecruncher.dsurround.lib.scripting.Script;
 public class BiomeCommandHandler {
 
     public static Component execute(ResourceLocation biomeIdentifier, String script) {
-        var registryAccess = GameUtils.getWorld().registryAccess();
-        Registry<Biome> biomeRegistry = registryAccess.registryOrThrow(Registries.BIOME);
+        var world = GameUtils.getWorld().orElseThrow();
+        var biomeRegistry = world.registryAccess().registryOrThrow(Registries.BIOME);
         
         var biome = biomeRegistry.getOptional(biomeIdentifier);
         if (biome.isEmpty()) {

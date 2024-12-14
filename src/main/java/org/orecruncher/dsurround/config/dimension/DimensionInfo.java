@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import org.orecruncher.dsurround.Constants;
 import org.orecruncher.dsurround.config.data.DimensionConfigRule;
+import org.orecruncher.dsurround.lib.util.ResourceUtils;
 import org.orecruncher.dsurround.lib.world.WorldUtils;
 
 public class DimensionInfo {
@@ -21,7 +22,7 @@ public class DimensionInfo {
     protected boolean playBiomeSounds = true;
 
     DimensionInfo() {
-        this.name = new ResourceLocation(Constants.MOD_ID, "no_dimension");
+        this.name = ResourceUtils.createResourceLocation(Constants.MOD_ID, "no_dimension");
         this.isFlatWorld = false;
     }
 

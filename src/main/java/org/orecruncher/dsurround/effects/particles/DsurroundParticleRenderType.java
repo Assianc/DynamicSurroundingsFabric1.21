@@ -1,6 +1,5 @@
 package org.orecruncher.dsurround.effects.particles;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -10,33 +9,32 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 
 public class DsurroundParticleRenderType implements ParticleRenderType {
-
     private final ResourceLocation texture;
+    private final VertexFormat format;
 
-    public DsurroundParticleRenderType(final ResourceLocation texture) {
-        this.texture = texture;
+    public DsurroundParticleRenderType(ResourceLocation texture) {
+        this(texture, DefaultVertexFormat.PARTICLE);
     }
 
-    protected VertexFormat getVertexFormat() {
-        return DefaultVertexFormat.PARTICLE; //.POSITION_TEXTURE_COLOR_LIGHT;
+    public DsurroundParticleRenderType(ResourceLocation texture, VertexFormat format) {
+        this.texture = texture;
+        this.format = format;
     }
 
     @Override
-    public void begin(final BufferBuilder buffer, final TextureManager textureManager) {
-        RenderSystem.depthMask(true);
-        RenderSystem.setShaderTexture(0, this.getTexture());
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        buffer.begin(VertexFormat.Mode.QUADS, this.getVertexFormat());
+    public void begin(BufferBuilder buffer, TextureManager textureManager) {
+        textureManager.bindForSetup(this.texture);
+        buffer.begin(VertexFormat.Mode.QUADS, this.format);
     }
 
     @Override
     public void end(Tesselator tesselator) {
+        tesselator.getBuilder().end();
         tesselator.end();
     }
 
-    protected ResourceLocation getTexture() {
-        return this.texture;
+    public VertexFormat getVertexFormat() {
+        return this.format;
     }
 
     @Override

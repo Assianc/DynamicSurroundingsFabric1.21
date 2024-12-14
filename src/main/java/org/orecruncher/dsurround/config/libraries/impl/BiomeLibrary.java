@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.locale.Language;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import org.orecruncher.dsurround.config.SyntheticBiome;
@@ -22,10 +23,7 @@ import org.orecruncher.dsurround.runtime.BiomeConditionEvaluator;
 import org.orecruncher.dsurround.mixinutils.IBiomeExtended;
 import org.orecruncher.dsurround.lib.GameUtils;
 
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -40,12 +38,8 @@ public final class BiomeLibrary implements IBiomeLibrary {
 
     private final Map<SyntheticBiome, BiomeInfo> internalBiomes = new EnumMap<>(SyntheticBiome.class);
 
-    // Cached list of biome config rules.  Need to hold onto them
-    // because they may be needed to handle a dynamic biome load.
     private final ObjectArray<BiomeConfigRule> biomeConfigs = new ObjectArray<>(64);
 
-    // Current version of the configs that are loaded.  Used to detect when
-    // configs changed and cached biome info needs a refresh.
     private int version = 0;
 
     public BiomeLibrary(IModLog logger) {
@@ -55,7 +49,6 @@ public final class BiomeLibrary implements IBiomeLibrary {
 
     @Override
     public void reload(ResourceUtilities resourceUtilities, IReloadEvent.Scope scope) {
-
         this.version++;
 
         if (scope == IReloadEvent.Scope.TAGS) {
@@ -63,7 +56,6 @@ public final class BiomeLibrary implements IBiomeLibrary {
             return;
         }
 
-        // Wipe out the internal biome cache.  These will be reset.
         this.internalBiomes.clear();
         this.biomeConfigs.clear();
         this.biomeConditionEvaluator.reset();
@@ -71,8 +63,6 @@ public final class BiomeLibrary implements IBiomeLibrary {
         var findResults = resourceUtilities.findModResources(CODEC, FILE_NAME);
         findResults.forEach(result -> this.biomeConfigs.addAll(result.resourceContent()));
 
-        // Ensure they are in priority order where the least is towards the beginning
-        // of the list.
         this.biomeConfigs.sort(Comparator.comparingInt(BiomeConfigRule::priority));
 
         for (var b : SyntheticBiome.values())
@@ -83,7 +73,8 @@ public final class BiomeLibrary implements IBiomeLibrary {
 
     private void initializeSyntheticBiome(SyntheticBiome biome) {
         String match = "@" + biome.getName();
-        var info = new BiomeInfo(this.version, biome.getId(), biome.getName(), biome.getTraits());
+        var traits = BiomeTraits.createFrom(biome.getTraits());
+        var info = new BiomeInfo(this.version, biome.getId(), biome.getName(), traits);
 
         for (var c : this.biomeConfigs) {
             if (c.biomeSelector().asString().equalsIgnoreCase(match)) {
@@ -102,17 +93,13 @@ public final class BiomeLibrary implements IBiomeLibrary {
 
     @Override
     public BiomeInfo getBiomeInfo(Biome biome) {
-        // check the cached property on the biome and return the info
-        // that is there.
         var info = ((IBiomeExtended) (Object) biome).dsurround_getInfo();
         if (info != null && info.getVersion() == this.version)
             return info;
 
-        // Not set or something changed.  Need a refresh.
         ResourceLocation id;
         String name;
 
-        // Pull from cached data if we have it, otherwise lookup
         if (info != null) {
             id = info.getBiomeId();
             name = info.getBiomeName();
@@ -121,20 +108,13 @@ public final class BiomeLibrary implements IBiomeLibrary {
             name = getBiomeName(id);
         }
 
-        // Regenerate the traits.  Something about the biome may have changed
-        // which could ripple into traits.
-        BiomeTraits traits = BiomeTraits.createFrom(id, biome);
+        var traits = BiomeTraits.createFrom(id, biome);
 
-        // Build out the info object and store into the biome.  We need to do that
-        // so that when applying configs, the script engine can find it.
         final var result = new BiomeInfo(this.version, id, name, traits, biome);
         ((IBiomeExtended) (Object) biome).dsurround_setInfo(result);
 
-        // Collect any trait changes into the trait collection before applying
-        // general rules as these traits can influence decisions.
         this.applyTraits(biome, result);
 
-        // Apply rule configs
         Guard.execute(() -> applyRuleConfigs(biome, result));
         return result;
     }
@@ -181,12 +161,10 @@ public final class BiomeLibrary implements IBiomeLibrary {
                     }
                 });
 
-        // Reduce memory consumption as much as possible
         info.trim();
     }
 
     private Stream<BiomeConfigRule> getNonSyntheticBiomeRules(Predicate<BiomeConfigRule> filter) {
-        // Filter out synthetic biome data
         return this.biomeConfigs.stream()
                 .filter(c -> !c.biomeSelector().asString().startsWith("@"))
                 .filter(filter);
@@ -194,7 +172,9 @@ public final class BiomeLibrary implements IBiomeLibrary {
 
     private static ResourceLocation getBiomeId(Biome biome) {
         return RegistryUtils.getRegistryEntry(Registries.BIOME, biome)
-                .map(holder -> holder.unwrapKey().orElseThrow().location()).orElseThrow();
+                .flatMap(holder -> holder.unwrapKey())
+                .map(key -> key.location())
+                .orElseThrow(() -> new IllegalStateException("Cannot get biome ID"));
     }
 
     @Override

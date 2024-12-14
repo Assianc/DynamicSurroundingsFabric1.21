@@ -13,6 +13,8 @@ import java.util.Set;
  */
 public final class Constants {
 
+    private Constants() {}
+
     /**
      * The ID of the current mod
      */

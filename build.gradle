@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.5-SNAPSHOT'
+    id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -18,6 +18,17 @@ repositories {
     maven { url "https://api.modrinth.com/maven" }
     maven { url "https://maven.quiltmc.org/repository/release" }
     maven { url 'https://jitpack.io' }
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+    maven {
+        url = 'https://maven.resourcefulbees.com/repository/maven-public/'
+    }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
     mavenCentral()
 }
 
@@ -45,6 +56,12 @@ dependencies {
         exclude(group: "net.fabricmc.fabric-api")
     }
     modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}")
+
+    // Serene Seasons from Modrinth
+    modCompileOnly "maven.modrinth:serene-seasons:${project.serene_seasons_version}"
+    
+    // Include Fabric API as a Jar-in-Jar dependency
+    include "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
 processResources {
@@ -57,12 +74,15 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
-    it.options.release = 17
+    it.options.release = 21
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     withSourcesJar()
 }
 
@@ -71,4 +91,24 @@ jar {
         rename { "${it}_${project.archivesBaseName}" }
     }
     from("CREDITS.md")
+    
+    // 确保生成的jar文件包含所有依赖
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// 添加一个任务来确保build/libs目录存在
+task ensureLibsDir {
+    doFirst {
+        mkdir "build/libs"
+    }
+}
+
+// 让build任务依赖于ensureLibsDir
+build.dependsOn ensureLibsDir
+
+// 确保Gradle使用Java 21
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 21
+    }
 }

@@ -11,6 +11,7 @@ import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.packs.repository.PackRepository;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -35,6 +36,10 @@ public final class GameUtils {
         return Optional.ofNullable(getMC().screen);
     }
 
+    public static void setScreen(Screen screen) {
+        getMC().setScreen(screen);
+    }
+
     public static SoundManager getSoundManager() {
         return Objects.requireNonNull(getMC().getSoundManager());
     }
@@ -47,7 +52,7 @@ public final class GameUtils {
         return Objects.requireNonNull(getMC().getTextureManager());
     }
 
-    public static Font getFontRenderer() {
+    public static Font getTextRenderer() {
         return Objects.requireNonNull(getMC().font);
     }
 
@@ -65,5 +70,25 @@ public final class GameUtils {
 
     public static boolean isThirdPersonView() {
         return getGameSettings().getCameraType() != CameraType.FIRST_PERSON;
+    }
+
+    public static boolean isFirstPersonView() {
+        return !isThirdPersonView();
+    }
+
+    public static String getServerBrand() {
+        var mc = getMC();
+        if (mc.player != null && mc.player.connection != null && mc.player.connection.getConnection() != null) {
+            return mc.player.connection.getConnection().serverBrand;
+        }
+        return "Unknown";
+    }
+
+    public static PackRepository getResourceManager() {
+        return getMC().getResourcePackRepository();
+    }
+
+    public static boolean isPaused() {
+        return getMC().isPaused();
     }
 }

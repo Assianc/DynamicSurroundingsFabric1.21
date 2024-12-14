@@ -6,35 +6,69 @@ import net.minecraft.resources.ResourceLocation;
 import org.orecruncher.dsurround.lib.collections.ObjectArray;
 import org.orecruncher.dsurround.lib.logging.IModLog;
 import org.orecruncher.dsurround.lib.platform.IPlatform;
+import org.orecruncher.dsurround.lib.util.ResourceUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Predicate;
 
 import static org.orecruncher.dsurround.Configuration.Flags.RESOURCE_LOADING;
 
 public class DiskResourceFinder extends AbstractResourceFinder {
 
-    private final Collection<Path> namespacesOnDisk = new ObjectArray<>();
+    private final Path root;
+    private final String namespace;
+    private final String prefix;
+    private final Collection<Path> namespacesOnDisk = new ArrayList<>();
 
-    public DiskResourceFinder(IModLog logger, IPlatform platform, Path diskLocation) {
+    public DiskResourceFinder(IModLog logger, IPlatform platform, Path root, String namespace, String prefix) {
         super(logger);
-
-        // Enumerate the folders on disk and validate against loaded mods.
-        try (var directoryList = Files.newDirectoryStream(diskLocation, Files::isDirectory)) {
-            directoryList.forEach(p -> {
-                var modNamespace = p.getFileName().toString();
-                if (platform.isModLoaded(modNamespace))
-                    this.namespacesOnDisk.add(p);
-            });
-        } catch (Throwable t) {
+        this.root = root;
+        this.namespace = namespace;
+        this.prefix = prefix;
+        
+        // Initialize namespacesOnDisk
+        try {
+            if (Files.exists(root)) {
+                Files.list(root)
+                    .filter(Files::isDirectory)
+                    .forEach(this.namespacesOnDisk::add);
+            }
+        } catch (IOException e) {
+            logger.error(e, "Failed to initialize namespacesOnDisk");
         }
+    }
+
+    public Collection<ResourceLocation> findResources(Predicate<ResourceLocation> filter) {
+        List<ResourceLocation> result = new ArrayList<>();
+        try {
+            var rootPath = this.root.resolve(this.namespace).resolve(this.prefix);
+            if (!Files.exists(rootPath))
+                return result;
+
+            Files.walk(rootPath)
+                    .filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        var relativePath = rootPath.relativize(path);
+                        var assetPath = this.prefix + "/" + relativePath.toString().replace('\\', '/');
+                        var location = ResourceUtils.createResourceLocation(this.namespace, assetPath);
+                        if (location != null && filter.test(location)) {
+                            result.add(location);
+                        }
+                    });
+        } catch (IOException ignored) {
+        }
+        return result;
     }
 
     @Override
     public <T> Collection<DiscoveredResource<T>> find(Codec<T> codec, String assetPath) {
-
         // Fast optimization. The vast majority of users will not have local config information.
         if (this.namespacesOnDisk.isEmpty())
             return ImmutableList.of();
@@ -48,17 +82,19 @@ public class DiskResourceFinder extends AbstractResourceFinder {
         // Namespaces on disk should have been collected/pruned so what remains
         // is what needs to be checked.
         for (var path : this.namespacesOnDisk) {
-            var filePath = Paths.get(path.toString(), fileName);
+            var filePath = path.resolve(fileName);
             if (Files.exists(filePath)) {
                 this.logger.debug(RESOURCE_LOADING, "[%s] - Processing %s file from disk", assetPath, filePath.toString());
                 var namespace = path.getFileName().toString();
-                var location = new ResourceLocation(namespace, assetPath);
-                try {
-                    var content = Files.readString(filePath);
-                    this.decode(location, content, codec).ifPresent(e -> result.add(new DiscoveredResource<>(namespace, e)));
-                    this.logger.debug(RESOURCE_LOADING, "[%s] - Completed decode of %s", assetPath, filePath);
-                } catch (Throwable t) {
-                    this.logger.error(t, "[%s] Unable to read resource stream for path %s", assetPath, location);
+                var location = ResourceUtils.createResourceLocation(namespace, assetPath);
+                if (location != null) {
+                    try {
+                        var content = Files.readString(filePath);
+                        this.decode(location, content, codec).ifPresent(e -> result.add(new DiscoveredResource<>(namespace, e)));
+                        this.logger.debug(RESOURCE_LOADING, "[%s] - Completed decode of %s", assetPath, filePath);
+                    } catch (Throwable t) {
+                        this.logger.error(t, "[%s] Unable to read resource stream for path %s", assetPath, location);
+                    }
                 }
             }
         }

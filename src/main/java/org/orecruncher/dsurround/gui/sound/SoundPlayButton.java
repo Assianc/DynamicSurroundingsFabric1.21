@@ -1,31 +1,42 @@
 package org.orecruncher.dsurround.gui.sound;
 
-import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
-import org.orecruncher.dsurround.lib.Library;
-import org.orecruncher.dsurround.lib.gui.ToggleButton;
+import org.orecruncher.dsurround.Constants;
+import org.orecruncher.dsurround.lib.util.ResourceUtils;
 
-public class SoundPlayButton extends ToggleButton {
+public class SoundPlayButton extends Button {
+    private static final ResourceLocation BUTTON_TEXTURE = ResourceUtils.createResourceLocation(Constants.MOD_ID, "textures/gui/sound_play.png");
+    private static final int TEXTURE_WIDTH = 32;
+    private static final int TEXTURE_HEIGHT = 32;
+    private static final int BUTTON_WIDTH = 20;
+    private static final int BUTTON_HEIGHT = 20;
 
-    // These are 20x20 sprites
-    private static final ResourceLocation PLAY_SYMBOL = new ResourceLocation(Library.MOD_ID, "controls/play");
-    private static final ResourceLocation STOP_SYMBOL = new ResourceLocation(Library.MOD_ID, "controls/stop");
+    private boolean isPlaying;
 
-    public SoundPlayButton(OnPress onPress) {
-        super(false, STOP_SYMBOL, PLAY_SYMBOL, onPress);
+    public SoundPlayButton(int x, int y, OnPress onPress) {
+        super(Button.builder(Component.empty(), onPress)
+                .pos(x, y)
+                .size(BUTTON_WIDTH, BUTTON_HEIGHT));
+        this.isPlaying = false;
     }
 
     @Override
-    public void playDownSound(@NotNull SoundManager ignored) {
-        // Do nothing - we are suppressing the button click sound
+    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        int u = this.isPlaying ? BUTTON_WIDTH : 0;
+        int v = this.isHovered() ? BUTTON_HEIGHT : 0;
+
+        graphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        graphics.blit(BUTTON_TEXTURE, this.getX(), this.getY(), u, v, BUTTON_WIDTH, BUTTON_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
-    public void play() {
-        this.setOn(true);
+    public void setPlaying(boolean playing) {
+        this.isPlaying = playing;
     }
 
-    public void stop() {
-        this.setOn(false);
+    public boolean isPlaying() {
+        return this.isPlaying;
     }
 }

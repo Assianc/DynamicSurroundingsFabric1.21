@@ -28,7 +28,7 @@ import org.orecruncher.dsurround.sound.SoundMetadata;
 
 import java.util.*;
 
-public class IndividualSoundControlListEntry extends ContainerObjectSelectionList.Entry<IndividualSoundControlListEntry> implements AutoCloseable {
+public class IndividualSoundControlListEntry extends ObjectSelectionList.Entry<IndividualSoundControlListEntry> {
 
     private static final ISoundLibrary SOUND_LIBRARY = ContainerManager.resolve(ISoundLibrary.class);
     private static final IAudioPlayer AUDIO_PLAYER = ContainerManager.resolve(IAudioPlayer.class);
@@ -52,81 +52,83 @@ public class IndividualSoundControlListEntry extends ContainerObjectSelectionLis
     private static final Collection<Component> BLOCK_HELP = GuiHelpers.getTrimmedTextCollection("dsurround.text.soundconfig.block.help", TOOLTIP_WIDTH, STYLE_HELP);
     private static final int CONTROL_SPACING = 3;
 
-    private final IndividualSoundConfigEntry config;
-    private final TextWidget label;
-    private final VolumeSliderControl volume;
+    private final IndividualSoundControlList parent;
+    private final ResourceLocation soundLocation;
+    private final Component displayName;
+    private final SoundPlayButton playButton;
     private final BlockButton blockButton;
     private final CullButton cullButton;
-    private final @Nullable SoundPlayButton playButton;
 
     private final List<AbstractWidget> children = new ArrayList<>();
     private final List<FormattedCharSequence> cachedToolTip = new ArrayList<>();
 
     private ConfigSoundInstance soundPlay;
 
-    public IndividualSoundControlListEntry(final IndividualSoundConfigEntry data, final boolean enablePlay) {
-        this.config = data;
+    public IndividualSoundControlListEntry(IndividualSoundControlList parent, ResourceLocation soundLocation) {
+        this.parent = parent;
+        this.soundLocation = soundLocation;
+        this.displayName = Component.literal(soundLocation.toString());
+        this.playButton = new SoundPlayButton(0, 0, button -> this.parent.playSound(this.soundLocation));
+        this.blockButton = new BlockButton(0, 0, button -> {});
+        this.cullButton = new CullButton(0, 0, button -> {});
 
-        this.label = new TextWidget(0, 0, 200, GameUtils.getTextRenderer().lineHeight, Component.literal(data.soundEventId.toString()), GameUtils.getTextRenderer());
-        this.children.add(this.label);
-
-        this.volume = new VolumeSliderControl(this, 0, 0);
-        this.children.add(this.volume);
-
-        this.blockButton = new BlockButton(this.config.block, this::toggleBlock);
+        this.children.add(new TextWidget(0, 0, 200, GameUtils.getTextRenderer().lineHeight, this.displayName, GameUtils.getTextRenderer()));
+        this.children.add(this.playButton);
         this.children.add(this.blockButton);
-
-        this.cullButton = new CullButton(this.config.cull, this::toggleCull);
         this.children.add(this.cullButton);
+    }
 
-        if (enablePlay) {
-            this.playButton = new SoundPlayButton(this::play);
-            this.children.add(this.playButton);
-        } else {
-            this.playButton = null;
+    public ResourceLocation getSoundLocation() {
+        return this.soundLocation;
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovered, float partialTick) {
+        int textColor = isHovered ? ColorPalette.WHITE.getRGB() : ColorPalette.GRAY.getRGB();
+        graphics.drawString(graphics.minecraft.font, this.displayName, left + 24, top + 6, textColor);
+
+        this.playButton.setX(left);
+        this.playButton.setY(top);
+        this.playButton.render(graphics, mouseX, mouseY, partialTick);
+
+        this.blockButton.setX(left + width - 48);
+        this.blockButton.setY(top);
+        this.blockButton.render(graphics, mouseX, mouseY, partialTick);
+
+        this.cullButton.setX(left + width - 24);
+        this.cullButton.setY(top);
+        this.cullButton.render(graphics, mouseX, mouseY, partialTick);
+
+        for (final AbstractWidget w : this.children)
+            w.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.playButton.isMouseOver(mouseX, mouseY)) {
+            this.playButton.onClick(mouseX, mouseY);
+            return true;
         }
+        if (this.blockButton.isMouseOver(mouseX, mouseY)) {
+            this.blockButton.onClick(mouseX, mouseY);
+            return true;
+        }
+        if (this.cullButton.isMouseOver(mouseX, mouseY)) {
+            this.cullButton.onClick(mouseX, mouseY);
+            return true;
+        }
+        return false;
     }
 
-    public int getWidth() {
-        int width = this.label.getWidth();
-        width += this.cullButton.getWidth() + this.blockButton.getWidth() + this.volume.getWidth() + 4 * CONTROL_SPACING;
-        if (this.playButton != null)
-            width += this.playButton.getWidth() + CONTROL_SPACING;
-        return width;
-    }
-
-    public void setWidth(int width) {
-        var fixedWidth = this.cullButton.getWidth() + this.blockButton.getWidth() + this.volume.getWidth() + 4 * CONTROL_SPACING;
-        if (this.playButton != null)
-            fixedWidth += this.playButton.getWidth() + CONTROL_SPACING;
-        width -= fixedWidth;
-        if (width < 100)
-            width = 100;
-        this.label.setWidth(width);
-    }
-
-    public void mouseMoved(double mouseX, double mouseY) {
-        AbstractWidget child = this.findChild(mouseX, mouseY);
-        if (child != null)
-            child.mouseMoved(mouseX, mouseY);
+    @Override
+    public Component getNarration() {
+        return this.displayName;
     }
 
     @Override
     public @NotNull List<? extends GuiEventListener> children() {
         // TODO:  What?
         return this.children;
-    }
-
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        AbstractWidget child = this.findChild(mouseX, mouseY);
-        if (child != null)
-            return child.mouseClicked(mouseX, mouseY, button);
-        return false;
-    }
-
-    @Override
-    public @NotNull List<? extends NarratableEntry> narratables() {
-        return ImmutableList.of();
     }
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
@@ -161,56 +163,21 @@ public class IndividualSoundControlListEntry extends ContainerObjectSelectionLis
         return null;
     }
 
-    @Override
-    public void render(final @NotNull GuiGraphics context, int index, int rowTop, int rowLeft, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean mouseOver, float partialTick_) {
-        final var font = GameUtils.getTextRenderer();
-        final int labelY = rowTop + (rowHeight - font.lineHeight) / 2;
-
-        this.label.setX(rowLeft);
-        this.label.setY(labelY);
-
-        // Need to position the other controls appropriately
-        int rightMargin = rowLeft + rowWidth;
-        this.volume.setX(rightMargin - this.volume.getWidth());
-        this.volume.setY(rowTop);
-        this.volume.setHeight(rowHeight);
-        rightMargin -= this.volume.getWidth() + CONTROL_SPACING;
-
-        if (this.playButton != null) {
-            this.playButton.setX(rightMargin - this.playButton.getWidth());
-            this.playButton.setY(rowTop);
-            this.playButton.setHeight(rowHeight);
-            rightMargin -= this.playButton.getWidth() + CONTROL_SPACING;
-        }
-
-        this.blockButton.setX(rightMargin - this.blockButton.getWidth());
-        this.blockButton.setY(rowTop);
-        this.blockButton.setHeight(rowHeight);
-        rightMargin -= this.blockButton.getWidth() + CONTROL_SPACING;
-
-        this.cullButton.setX(rightMargin - this.cullButton.getWidth());
-        this.cullButton.setHeight(rowHeight);
-        this.cullButton.setY(rowTop);
-
-        for (final AbstractWidget w : this.children)
-            w.render(context, mouseX, mouseY, partialTick_);
-    }
-
     protected void toggleBlock(Button button) {
         if (button instanceof BlockButton bb) {
-            this.config.block = bb.toggle();
+            this.parent.config.block = bb.toggle();
         }
     }
 
     protected void toggleCull(Button button) {
         if (button instanceof CullButton cb)
-            this.config.cull = cb.toggle();
+            this.parent.config.cull = cb.toggle();
     }
 
     protected void play(final Button button) {
         if (button instanceof SoundPlayButton sp) {
             if (this.soundPlay == null) {
-                this.soundPlay = this.playSound(this.config);
+                this.soundPlay = this.playSound(this.parent.config);
                 sp.play();
             } else {
                 AUDIO_PLAYER.stop(this.soundPlay);
@@ -247,7 +214,7 @@ public class IndividualSoundControlListEntry extends ContainerObjectSelectionLis
     protected List<FormattedCharSequence> getToolTip(final int mouseX, final int mouseY) {
         // Cache the static part of the tooltip if needed
         if (this.cachedToolTip.isEmpty()) {
-            ResourceLocation id = this.config.soundEventId;
+            ResourceLocation id = this.parent.config.soundEventId;
             this.resolveDisplayName(id.getNamespace())
                     .ifPresent(name -> {
                         FormattedCharSequence modName = FormattedCharSequence.forward(Objects.requireNonNull(ChatFormatting.stripFormatting(name)), STYLE_MOD_NAME);
@@ -291,14 +258,12 @@ public class IndividualSoundControlListEntry extends ContainerObjectSelectionLis
         List<FormattedCharSequence> generatedTip = new ArrayList<>(this.cachedToolTip);
 
         Collection<Component> toAppend = null;
-        if (this.volume.isMouseOver(mouseX, mouseY)) {
-            toAppend = VOLUME_HELP;
+        if (this.playButton.isMouseOver(mouseX, mouseY)) {
+            toAppend = PLAY_HELP;
         } else if (this.blockButton.isMouseOver(mouseX, mouseY)) {
             toAppend = BLOCK_HELP;
         } else if (this.cullButton.isMouseOver(mouseX, mouseY)) {
             toAppend = CULL_HELP;
-        } else if (this.playButton != null && this.playButton.isMouseOver(mouseX, mouseY)) {
-            toAppend = PLAY_HELP;
         }
 
         if (toAppend != null) {
@@ -327,7 +292,7 @@ public class IndividualSoundControlListEntry extends ContainerObjectSelectionLis
      * @return Updated IndividualSoundControl data
      */
     public IndividualSoundConfigEntry getData() {
-        return this.config;
+        return this.parent.config;
     }
 
 }

@@ -8,10 +8,8 @@ import org.orecruncher.dsurround.gui.overlay.DiagnosticsOverlay;
 import org.orecruncher.dsurround.gui.sound.IndividualSoundControlScreen;
 import org.orecruncher.dsurround.lib.GameUtils;
 import org.orecruncher.dsurround.lib.Library;
-import org.orecruncher.dsurround.lib.di.ContainerManager;
 import org.orecruncher.dsurround.lib.platform.Services;
 import org.orecruncher.dsurround.eventing.ClientState;
-import org.orecruncher.dsurround.sound.IAudioPlayer;
 
 public class KeyBindings {
 
@@ -23,20 +21,27 @@ public class KeyBindings {
         var platform = Library.PLATFORM;
 
         var modMenuKey = platform.isModLoaded("modmenu") ? InputConstants.UNKNOWN.getValue() : InputConstants.KEY_EQUALS;
-        modConfigurationMenu = platform.registerKeyBinding(
+        modConfigurationMenu = new KeyMapping(
                 "dsurround.text.keybind.modConfigurationMenu",
+                InputConstants.Type.KEYSYM,
                 modMenuKey,
                 "dsurround.text.keybind.section");
 
-        individualSoundConfigBinding = platform.registerKeyBinding(
+        individualSoundConfigBinding = new KeyMapping(
                 "dsurround.text.keybind.individualSoundConfig",
+                InputConstants.Type.KEYSYM,
                 InputConstants.UNKNOWN.getValue(),
                 "dsurround.text.keybind.section");
 
-        diagnosticHud = platform.registerKeyBinding(
+        diagnosticHud = new KeyMapping(
                 "dsurround.text.keybind.diagnosticHud",
+                InputConstants.Type.KEYSYM,
                 InputConstants.UNKNOWN.getValue(),
                 "dsurround.text.keybind.section");
+
+        platform.registerKeyBinding(modConfigurationMenu);
+        platform.registerKeyBinding(individualSoundConfigBinding);
+        platform.registerKeyBinding(diagnosticHud);
     }
 
     public static void register() {
@@ -51,19 +56,11 @@ public class KeyBindings {
             var factory = Services.PLATFORM.getModConfigScreenFactory(Configuration.class);
             if (factory.isPresent()) {
                 GameUtils.setScreen(factory.get().create(GameUtils.getMC(), null));
-            } else {
-                Library.LOGGER.info("Configuration GUI libraries not present");
             }
-        }
-
-        if (diagnosticHud.consumeClick())
-            ContainerManager.resolve(DiagnosticsOverlay.class).toggleCollection();
-
-        if (individualSoundConfigBinding.consumeClick()) {
-            final boolean singlePlayer = GameUtils.isSinglePlayer();
-            GameUtils.setScreen(new IndividualSoundControlScreen(null, singlePlayer));
-            if (singlePlayer)
-                ContainerManager.resolve(IAudioPlayer.class).stopAll();
+        } else if (individualSoundConfigBinding.consumeClick()) {
+            GameUtils.setScreen(new IndividualSoundControlScreen(null, true));
+        } else if (diagnosticHud.consumeClick()) {
+            DiagnosticsOverlay.get().toggleDisplay();
         }
     }
 }

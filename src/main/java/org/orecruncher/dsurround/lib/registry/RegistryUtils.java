@@ -2,7 +2,6 @@ package org.orecruncher.dsurround.lib.registry;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +15,7 @@ public class RegistryUtils {
     public static <T> Optional<Registry<T>> getRegistry(ResourceKey<? extends Registry<T>> registryKey) {
         return GameUtils.getWorld()
                 .map(world -> world.registryAccess().registry(registryKey))
-                .or(() -> (Optional<Registry<T>>) BuiltInRegistries.REGISTRY.getOptional(registryKey.location()));
+                .or(() -> Optional.ofNullable((Registry<T>) BuiltInRegistries.REGISTRY.get(registryKey.location())));
     }
 
     public static <T> Optional<Holder.Reference<T>> getRegistryEntry(ResourceKey<Registry<T>> registryKey, T instance) {

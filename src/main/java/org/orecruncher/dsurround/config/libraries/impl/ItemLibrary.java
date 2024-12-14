@@ -76,11 +76,11 @@ public class ItemLibrary implements IItemLibrary {
 
     @Override
     public Stream<String> dump() {
-        var itemRegistry = GameUtils.getWorld()
+        return GameUtils.getWorld()
                 .map(world -> world.registryAccess().registryOrThrow(Registries.ITEM))
-                .orElseThrow()
-                .entrySet();
-        return itemRegistry.stream()
+                .map(Registry::entrySet)
+                .orElseGet(java.util.Collections::emptySet)
+                .stream()
                 .map(kvp -> formatItemOutput(kvp.getKey().location(), kvp.getValue()))
                 .sorted();
     }
@@ -115,10 +115,17 @@ public class ItemLibrary implements IItemLibrary {
         var item = stack.getItem();
         SoundEvent itemEquipSound = null;
 
-        if (item instanceof Equipable equipment)
-            itemEquipSound = equipment.getEquipSound();
-        else if (item instanceof ArmorItem armor)
-            itemEquipSound = armor.getEquipSound();
+        if (item instanceof Equipable equipment) {
+            var holder = equipment.getEquipSound();
+            if (holder != null) {
+                itemEquipSound = holder.value();
+            }
+        } else if (item instanceof ArmorItem armor) {
+            var holder = armor.getEquipSound();
+            if (holder != null) {
+                itemEquipSound = holder.value();
+            }
+        }
 
         return itemEquipSound;
     }
@@ -132,9 +139,12 @@ public class ItemLibrary implements IItemLibrary {
 
         var item = stack.getItem();
 
-        if (item instanceof ElytraItem elytraItem)
-            itemEquipSound = elytraItem.getEquipSound();
-        else if (this.tagLibrary.is(ItemTags.LAVA_BUCKETS, stack))
+        if (item instanceof ElytraItem elytraItem) {
+            var holder = elytraItem.getEquipSound();
+            if (holder != null) {
+                itemEquipSound = holder.value();
+            }
+        } else if (this.tagLibrary.is(ItemTags.LAVA_BUCKETS, stack))
             itemEquipSound = SoundEvents.BUCKET_FILL_LAVA;
         else if (this.tagLibrary.is(ItemTags.WATER_BUCKETS, stack))
             itemEquipSound = SoundEvents.BUCKET_FILL;
