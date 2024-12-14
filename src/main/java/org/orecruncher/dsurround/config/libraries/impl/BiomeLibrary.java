@@ -20,6 +20,7 @@ import org.orecruncher.dsurround.lib.resources.ResourceUtilities;
 import org.orecruncher.dsurround.lib.scripting.Script;
 import org.orecruncher.dsurround.runtime.BiomeConditionEvaluator;
 import org.orecruncher.dsurround.mixinutils.IBiomeExtended;
+import org.orecruncher.dsurround.lib.GameUtils;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -94,7 +95,9 @@ public final class BiomeLibrary implements IBiomeLibrary {
     }
 
     private static Registry<Biome> getActiveRegistry() {
-        return RegistryUtils.getRegistry(Registries.BIOME).orElseThrow();
+        return GameUtils.getWorld()
+                .map(world -> world.registryAccess().registryOrThrow(Registries.BIOME))
+                .orElseThrow();
     }
 
     @Override

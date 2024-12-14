@@ -10,8 +10,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Objects;
@@ -19,10 +17,8 @@ import java.util.Optional;
 
 public final class GameUtils {
     private GameUtils() {
-
     }
 
-    // Client methods
     public static Optional<Player> getPlayer() {
         return Optional.ofNullable(getMC().player);
     }
@@ -31,76 +27,43 @@ public final class GameUtils {
         return Optional.ofNullable(getMC().level);
     }
 
-    public static Optional<RegistryAccess> getRegistryManager() {
-        return getWorld().map(ClientLevel::registryAccess);
+    public static Minecraft getMC() {
+        return Objects.requireNonNull(Minecraft.getInstance());
     }
 
     public static Optional<Screen> getCurrentScreen() {
         return Optional.ofNullable(getMC().screen);
     }
 
-    public static void setScreen(Screen screen) {
-        getMC().setScreen(screen);
+    public static SoundManager getSoundManager() {
+        return Objects.requireNonNull(getMC().getSoundManager());
     }
 
     public static ParticleEngine getParticleManager() {
-        return getMC().particleEngine;
-    }
-
-    public static Options getGameSettings() {
-        return getMC().options;
-    }
-
-    public static Font getTextRenderer() {
-        return getMC().font;
-    }
-
-    public static StringSplitter getTextHandler() {
-        return getTextRenderer().getSplitter();
-    }
-
-    public static SoundManager getSoundManager() {
-        return getMC().getSoundManager();
-    }
-
-    public static ResourceManager getResourceManager() {
-        return getMC().getResourceManager();
+        return Objects.requireNonNull(getMC().particleEngine);
     }
 
     public static TextureManager getTextureManager() {
-        return getMC().getTextureManager();
+        return Objects.requireNonNull(getMC().getTextureManager());
+    }
+
+    public static Font getFontRenderer() {
+        return Objects.requireNonNull(getMC().font);
+    }
+
+    public static StringSplitter getTextHandler() {
+        return Objects.requireNonNull(getMC().font.getSplitter());
+    }
+
+    public static Options getGameSettings() {
+        return Objects.requireNonNull(getMC().options);
     }
 
     public static boolean isInGame() {
         return getWorld().isPresent() && getPlayer().isPresent();
     }
 
-    public static boolean isPaused()
-    {
-        return getMC().isPaused();
-    }
-
-    public static boolean isSinglePlayer()
-    {
-        return getMC().isSingleplayer();
-    }
-
-    public static boolean isFirstPersonView() {
-        return getGameSettings().getCameraType() == CameraType.FIRST_PERSON;
-    }
-
-    public static Minecraft getMC() {
-        return Objects.requireNonNull(Minecraft.getInstance());
-    }
-
-    public static Optional<String> getServerBrand() {
-        var connection = getMC().getConnection();
-        if (connection != null)
-            return Optional.ofNullable(connection.serverBrand());
-        return Optional.empty();
-    }
-
-    public static MinecraftServerType getServerType() {
-        return getServerBrand().map(MinecraftServerType::fromBrand).orElse(MinecraftServerType.VANILLA);
+    public static boolean isThirdPersonView() {
+        return getGameSettings().getCameraType() != CameraType.FIRST_PERSON;
     }
 }

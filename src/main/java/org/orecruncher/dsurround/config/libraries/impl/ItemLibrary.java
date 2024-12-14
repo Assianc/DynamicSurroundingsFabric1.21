@@ -21,6 +21,7 @@ import org.orecruncher.dsurround.sound.ISoundFactory;
 import org.orecruncher.dsurround.sound.SoundFactoryBuilder;
 import org.orecruncher.dsurround.tags.ItemEffectTags;
 import org.orecruncher.dsurround.tags.ItemTags;
+import org.orecruncher.dsurround.lib.GameUtils;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -75,8 +76,13 @@ public class ItemLibrary implements IItemLibrary {
 
     @Override
     public Stream<String> dump() {
-        var itemRegistry = RegistryUtils.getRegistry(Registries.ITEM).map(Registry::entrySet).orElseThrow();
-        return itemRegistry.stream().map(kvp -> formatItemOutput(kvp.getKey().location(), kvp.getValue())).sorted();
+        var itemRegistry = GameUtils.getWorld()
+                .map(world -> world.registryAccess().registryOrThrow(Registries.ITEM))
+                .orElseThrow()
+                .entrySet();
+        return itemRegistry.stream()
+                .map(kvp -> formatItemOutput(kvp.getKey().location(), kvp.getValue()))
+                .sorted();
     }
 
     private static @Nullable ISoundFactory resolveEquipableStepSound(ItemStack stack) {
