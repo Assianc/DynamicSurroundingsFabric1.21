@@ -1,13 +1,12 @@
 package org.orecruncher.dsurround.config.libraries.impl;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import org.orecruncher.dsurround.config.block.BlockInfo;
-import org.orecruncher.dsurround.config.data.BlockConfigRule;
+import org.orecruncher.dsurround.config.block.BlockConfigRule;
 import org.orecruncher.dsurround.config.libraries.IBlockLibrary;
 import org.orecruncher.dsurround.config.libraries.IReloadEvent;
 import org.orecruncher.dsurround.config.libraries.ITagLibrary;
@@ -29,6 +28,7 @@ public final class BlockLibrary implements IBlockLibrary {
     private final ITagLibrary tagLibrary;
     private final ObjectArray<BlockConfigRule> blockConfigs = new ObjectArray<>(64);
     private int version = 0;
+    private final Map<ResourceLocation, BlockInfo> blocks = new HashMap<>();
 
     public BlockLibrary(IModLog logger, ITagLibrary tagLibrary) {
         this.logger = logger;
@@ -81,11 +81,11 @@ public final class BlockLibrary implements IBlockLibrary {
         if (rule.selector().equals(blockId.toString()))
             return true;
 
-        return this.tagLibrary.is(TagKey.create(Registries.BLOCK, rule.selector()), state);
+        return this.tagLibrary.is(TagKey.create(BuiltInRegistries.BLOCK.key(), ResourceLocation.tryParse(rule.selector())), state);
     }
 
     private static ResourceLocation getBlockId(Block block) {
-        return RegistryUtils.getRegistryEntry(Registries.BLOCK, block)
+        return RegistryUtils.getRegistryEntry(BuiltInRegistries.BLOCK, block)
                 .flatMap(holder -> holder.unwrapKey())
                 .map(key -> key.location())
                 .orElseThrow(() -> new IllegalStateException("Cannot get block ID"));
@@ -94,7 +94,7 @@ public final class BlockLibrary implements IBlockLibrary {
     @Override
     public Stream<String> dump() {
         return GameUtils.getWorld()
-                .map(world -> world.registryAccess().registryOrThrow(Registries.BLOCK))
+                .map(world -> world.registryAccess().registryOrThrow(BuiltInRegistries.BLOCK))
                 .map(registry -> registry.entrySet())
                 .orElseGet(Collections::emptySet)
                 .stream()
@@ -113,7 +113,7 @@ public final class BlockLibrary implements IBlockLibrary {
     }
 
     private String formatBlockOutput(ResourceLocation id, Block block) {
-        var tags = RegistryUtils.getRegistryEntry(Registries.BLOCK, block)
+        var tags = RegistryUtils.getRegistryEntry(BuiltInRegistries.BLOCK, block)
                 .map(e -> {
                     var t = this.tagLibrary.streamTags(e);
                     return this.tagLibrary.asString(t);
@@ -121,5 +121,62 @@ public final class BlockLibrary implements IBlockLibrary {
                 .orElse("null");
 
         return id.toString() + "\nTags: " + tags + "\n";
+    }
+
+    @Override
+    public void clear() {
+        this.blocks.clear();
+    }
+
+    @Override
+    public void reload() {
+        clear();
+        for (var block : BuiltInRegistries.BLOCK) {
+            var blockId = RegistryUtils.getBlockId(block);
+            registerBlock(blockId, block);
+        }
+    }
+
+    @Override
+    public Optional<BlockInfo> get(ResourceLocation id) {
+        return Optional.ofNullable(this.blocks.get(id));
+    }
+
+    @Override
+    public Collection<BlockInfo> getBlocks() {
+        return this.blocks.values();
+    }
+
+    @Override
+    public void registerBlock(ResourceLocation id, Block block) {
+        if (!this.blocks.containsKey(id)) {
+            var info = new BlockInfo(id);
+            this.blocks.put(id, info);
+        }
+    }
+
+    @Override
+    public void dumpBlockStates() {
+        var blockStates = new ArrayList<String>();
+        for (var block : BuiltInRegistries.BLOCK) {
+            var blockId = RegistryUtils.getBlockId(block);
+            var states = block.getStateDefinition().getPossibleStates();
+            for (var state : states) {
+                blockStates.add(String.format("%s[%s]", blockId, getPropertyString(state)));
+            }
+        }
+        Collections.sort(blockStates);
+        for (var state : blockStates) {
+            System.out.println(state);
+        }
+    }
+
+    private String getPropertyString(BlockState state) {
+        var properties = new ArrayList<String>();
+        for (var property : state.getProperties()) {
+            properties.add(String.format("%s=%s", property.getName(), state.getValue(property)));
+        }
+        Collections.sort(properties);
+        return String.join(",", properties);
     }
 }

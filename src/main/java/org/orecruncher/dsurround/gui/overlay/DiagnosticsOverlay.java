@@ -11,9 +11,7 @@ import org.orecruncher.dsurround.lib.logging.IModLog;
 import org.orecruncher.dsurround.eventing.CollectDiagnosticsEvent;
 import org.orecruncher.dsurround.eventing.ClientState;
 
-import java.util.Optional;
-
-public class DiagnosticsOverlay {
+public class DiagnosticsOverlay extends AbstractOverlay {
     private static final DiagnosticsOverlay INSTANCE = new DiagnosticsOverlay();
     private final IModLog logger;
     private final CollectDiagnosticsEvent reusableEvent = new CollectDiagnosticsEvent();
@@ -36,7 +34,6 @@ public class DiagnosticsOverlay {
         if (this.isVisible) {
             this.reusableEvent.clear();
             this.collectData();
-            this.render();
         }
     }
 
@@ -53,7 +50,11 @@ public class DiagnosticsOverlay {
         // Add other diagnostic data collection here
     }
 
-    private void render() {
+    @Override
+    public void render(GuiGraphics graphics, float partialTick) {
+        if (!this.isVisible || graphics == null)
+            return;
+
         var mc = GameUtils.getMC();
         if (mc.screen != null)
             return;
@@ -62,8 +63,11 @@ public class DiagnosticsOverlay {
         var lines = new ObjectArray<Component>();
 
         for (var section : CollectDiagnosticsEvent.Section.values()) {
-            var text = this.reusableEvent.getAsText(section);
+            var text = this.reusableEvent.getSectionText(section);
             if (!text.isEmpty()) {
+                if (section.addHeader()) {
+                    lines.add(Component.literal("=== " + section.name() + " ===").withStyle(style -> style.withColor(ColorPalette.GOLD.getRGB())));
+                }
                 lines.addAll(text);
             }
         }
@@ -71,10 +75,9 @@ public class DiagnosticsOverlay {
         if (lines.isEmpty())
             return;
 
-        var graphics = new GuiGraphics(mc, mc.renderBuffers().bufferSource());
         var y = 5;
         for (var line : lines) {
-            graphics.drawString(font, line, 5, y, ColorPalette.WHITE.getRGB());
+            graphics.drawString(font, line, 5, y, ColorPalette.WHITE.getRGB(), true);
             y += font.lineHeight + 1;
         }
     }

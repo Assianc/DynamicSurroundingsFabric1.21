@@ -24,7 +24,7 @@ public class ClientProfilerPlugin implements IDiagnosticPlugin {
         ClientState.TICK_END.register(this::tickEnd, HandlerPriority.VERY_LOW);
     }
 
-    private void tickStart(Minecraft client) {
+    private void tickStart(float partialTick) {
         this.timeMark = System.nanoTime();
         if (this.lastTickMark != -1) {
             this.lastTick.update(this.timeMark - this.lastTickMark);
@@ -33,7 +33,7 @@ public class ClientProfilerPlugin implements IDiagnosticPlugin {
         this.lastTickMark = this.timeMark;
     }
 
-    private void tickEnd(Minecraft client) {
+    private void tickEnd(float partialTick) {
         final long delta = System.nanoTime() - this.timeMark;
         this.clientTick.update(delta);
     }
@@ -47,12 +47,12 @@ public class ClientProfilerPlugin implements IDiagnosticPlugin {
 
             @Override
             public String toString() {
-                return String.format("Client TPS:%7.3fms", this.getMSecs());
+                return String.format("Client TPS: %.2f", this.getMSecs());
             }
         };
 
         event.add(tpsTimer);
-        event.add(clientTick);
-        event.add(lastTick);
+        event.add(this.clientTick);
+        event.add(this.lastTick);
     }
 }

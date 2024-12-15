@@ -9,6 +9,7 @@ import org.orecruncher.dsurround.gui.overlay.IDiagnosticPlugin;
 import org.orecruncher.dsurround.lib.GameUtils;
 import org.orecruncher.dsurround.lib.events.HandlerPriority;
 import org.orecruncher.dsurround.lib.gui.ColorPalette;
+import org.orecruncher.dsurround.mixinutils.IMusicManager;
 import org.orecruncher.dsurround.mixins.audio.MixinSoundManagerAccessor;
 import org.orecruncher.dsurround.mixins.audio.MixinSoundEngineAccessor;
 
@@ -31,7 +32,8 @@ public class SoundEngineDiagnosticsPlugin implements IDiagnosticPlugin {
         for (var category : SoundSource.values()) {
             var volumeSettings = GameUtils.getGameSettings().getSoundSourceVolume(category);
             if (Float.compare(volumeSettings, 0F) == 0) {
-                var text = Component.literal("%s is OFF".formatted(category.name())).withColor(ColorPalette.RED.getValue());
+                var text = Component.literal("%s is OFF".formatted(category.name()))
+                    .withStyle(style -> style.withColor(ColorPalette.RED.getRGB()));
                 panelText.add(text);
             }
         }

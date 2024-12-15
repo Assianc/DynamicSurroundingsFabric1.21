@@ -1,44 +1,37 @@
 package org.orecruncher.dsurround.effects.particles;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 public class DsurroundParticleRenderType implements ParticleRenderType {
-    private final ResourceLocation texture;
     private final VertexFormat format;
+    private final TextureAtlas textureAtlas;
 
-    public DsurroundParticleRenderType(ResourceLocation texture) {
-        this(texture, DefaultVertexFormat.PARTICLE);
-    }
-
-    public DsurroundParticleRenderType(ResourceLocation texture, VertexFormat format) {
-        this.texture = texture;
+    public DsurroundParticleRenderType(VertexFormat format, TextureAtlas textureAtlas) {
         this.format = format;
+        this.textureAtlas = textureAtlas;
     }
 
     @Override
     public void begin(BufferBuilder buffer, TextureManager textureManager) {
-        textureManager.bindForSetup(this.texture);
-        buffer.begin(VertexFormat.Mode.QUADS, this.format);
+        RenderSystem.setShaderTexture(0, this.textureAtlas.getId());
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
     }
 
     @Override
-    public void end(Tesselator tesselator) {
-        tesselator.getBuilder().end();
-        tesselator.end();
-    }
-
-    public VertexFormat getVertexFormat() {
-        return this.format;
+    public void end(BufferBuilder buffer) {
+        buffer.end();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
     }
 
     @Override
     public String toString() {
-        return this.texture.toString();
+        return "dsurround_particle";
     }
 }

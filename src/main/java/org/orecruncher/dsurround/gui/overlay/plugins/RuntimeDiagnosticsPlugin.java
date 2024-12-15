@@ -53,8 +53,12 @@ public class RuntimeDiagnosticsPlugin implements IDiagnosticPlugin {
             event.add(CollectDiagnosticsEvent.Section.Systems, musicManager);
 
             for (String script : scripts) {
-                Object result = this.conditionEvaluator.eval(new Script(script));
-                event.add(CollectDiagnosticsEvent.Section.Environment, result.toString());
+                try {
+                    Object result = this.conditionEvaluator.eval(new Script(script));
+                    event.add(CollectDiagnosticsEvent.Section.Environment, result.toString());
+                } catch (Exception e) {
+                    event.add(CollectDiagnosticsEvent.Section.Environment, "Script Error: " + e.getMessage());
+                }
             }
         }
     }

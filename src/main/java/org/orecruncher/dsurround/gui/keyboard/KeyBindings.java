@@ -1,66 +1,57 @@
 package org.orecruncher.dsurround.gui.keyboard;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 import org.orecruncher.dsurround.Configuration;
-import org.orecruncher.dsurround.gui.overlay.DiagnosticsOverlay;
 import org.orecruncher.dsurround.gui.sound.IndividualSoundControlScreen;
-import org.orecruncher.dsurround.lib.GameUtils;
-import org.orecruncher.dsurround.lib.Library;
+import org.orecruncher.dsurround.lib.platform.IPlatform;
 import org.orecruncher.dsurround.lib.platform.Services;
-import org.orecruncher.dsurround.eventing.ClientState;
 
 public class KeyBindings {
+    private static final String KEY_CATEGORY = "key.categories.dsurround";
 
-    public static final KeyMapping modConfigurationMenu;
-    public static final KeyMapping individualSoundConfigBinding;
-    public static final KeyMapping diagnosticHud;
+    public static final KeyMapping modConfigurationMenu = new KeyMapping(
+            "key.dsurround.modconfiguration",
+            GLFW.GLFW_KEY_K,
+            KEY_CATEGORY
+    );
 
-    static {
-        var platform = Library.PLATFORM;
+    public static final KeyMapping individualSoundConfigBinding = new KeyMapping(
+            "key.dsurround.soundconfig",
+            GLFW.GLFW_KEY_I,
+            KEY_CATEGORY
+    );
 
-        var modMenuKey = platform.isModLoaded("modmenu") ? InputConstants.UNKNOWN.getValue() : InputConstants.KEY_EQUALS;
-        modConfigurationMenu = new KeyMapping(
-                "dsurround.text.keybind.modConfigurationMenu",
-                InputConstants.Type.KEYSYM,
-                modMenuKey,
-                "dsurround.text.keybind.section");
-
-        individualSoundConfigBinding = new KeyMapping(
-                "dsurround.text.keybind.individualSoundConfig",
-                InputConstants.Type.KEYSYM,
-                InputConstants.UNKNOWN.getValue(),
-                "dsurround.text.keybind.section");
-
-        diagnosticHud = new KeyMapping(
-                "dsurround.text.keybind.diagnosticHud",
-                InputConstants.Type.KEYSYM,
-                InputConstants.UNKNOWN.getValue(),
-                "dsurround.text.keybind.section");
-
-        platform.registerKeyBinding(modConfigurationMenu);
-        platform.registerKeyBinding(individualSoundConfigBinding);
-        platform.registerKeyBinding(diagnosticHud);
-    }
+    public static final KeyMapping diagnosticHud = new KeyMapping(
+            "key.dsurround.diagnostichud",
+            GLFW.GLFW_KEY_L,
+            KEY_CATEGORY
+    );
 
     public static void register() {
-        ClientState.TICK_END.register(KeyBindings::handleMenuKeyPress);
+        IPlatform platform = Services.PLATFORM;
+        platform.registerKeyBinding(modConfigurationMenu.getName(), modConfigurationMenu.getKey().getValue(), KEY_CATEGORY);
+        platform.registerKeyBinding(individualSoundConfigBinding.getName(), individualSoundConfigBinding.getKey().getValue(), KEY_CATEGORY);
+        platform.registerKeyBinding(diagnosticHud.getName(), diagnosticHud.getKey().getValue(), KEY_CATEGORY);
     }
 
-    private static void handleMenuKeyPress(Minecraft client) {
-        if (GameUtils.getCurrentScreen().isPresent() || GameUtils.getPlayer().isEmpty())
-            return;
-
-        if (modConfigurationMenu.consumeClick()) {
+    public static void checkKeys() {
+        while (modConfigurationMenu.consumeClick()) {
             var factory = Services.PLATFORM.getModConfigScreenFactory(Configuration.class);
-            if (factory.isPresent()) {
-                GameUtils.setScreen(factory.get().create(GameUtils.getMC(), null));
+            if (factory != null) {
+                Minecraft.getInstance().setScreen(factory.apply(Minecraft.getInstance().screen));
             }
-        } else if (individualSoundConfigBinding.consumeClick()) {
-            GameUtils.setScreen(new IndividualSoundControlScreen(null, true));
-        } else if (diagnosticHud.consumeClick()) {
-            DiagnosticsOverlay.get().toggleDisplay();
+        }
+
+        while (individualSoundConfigBinding.consumeClick()) {
+            Minecraft.getInstance().setScreen(new IndividualSoundControlScreen(Minecraft.getInstance().screen));
+        }
+
+        while (diagnosticHud.consumeClick()) {
+            // Toggle diagnostic HUD
+            Configuration.getInstance().logging.enableDebugLogging = !Configuration.getInstance().logging.enableDebugLogging;
         }
     }
 }

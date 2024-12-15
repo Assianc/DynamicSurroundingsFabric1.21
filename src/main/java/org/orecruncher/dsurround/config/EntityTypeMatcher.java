@@ -2,13 +2,13 @@ package org.orecruncher.dsurround.config;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import org.orecruncher.dsurround.config.libraries.ITagLibrary;
 import org.orecruncher.dsurround.lib.IMatcher;
-import org.orecruncher.dsurround.lib.IdentityUtils;
 import org.orecruncher.dsurround.lib.di.ContainerManager;
 
 public abstract class EntityTypeMatcher implements IMatcher<Entity> {
@@ -21,15 +21,15 @@ public abstract class EntityTypeMatcher implements IMatcher<Entity> {
     private static DataResult<IMatcher<Entity>> manifest(String entityTypeId) {
         try {
             if (entityTypeId.startsWith("#")) {
-                // Entity tag
-                final var id = IdentityUtils.resolveIdentifier(entityTypeId);
-                var tagKey = TagKey.create(Registries.ENTITY_TYPE, id);
-                return DataResult.success(new MatchOnEntityTag(tagKey));
+                // Entity tag - remove the # prefix
+                String tagId = entityTypeId.substring(1);
+                var tagKey = TagKey.create(BuiltInRegistries.ENTITY_TYPE.key(), new ResourceLocation(tagId));
+                return DataResult.success((IMatcher<Entity>) new MatchOnEntityTag(tagKey));
             }
             else if (entityTypeId.contains(":")) {
                 // If it looks like an Identifier, then it must be an EntityType
                 var type = EntityType.byString(entityTypeId);
-                return type.<DataResult<IMatcher<Entity>>>map(entityType -> DataResult.success(new MatchOnEntityType(entityType)))
+                return type.<DataResult<IMatcher<Entity>>>map(entityType -> DataResult.success((IMatcher<Entity>) new MatchOnEntityType(entityType)))
                         .orElseGet(() -> DataResult.error(() -> String.format("Unknown entity type id %s", entityTypeId)));
             } else {
                 return DataResult.error(() -> String.format("Unknown entity class(s) %s", entityTypeId));
