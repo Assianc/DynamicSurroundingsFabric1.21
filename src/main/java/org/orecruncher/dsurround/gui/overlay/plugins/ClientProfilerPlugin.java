@@ -1,12 +1,10 @@
 package org.orecruncher.dsurround.gui.overlay.plugins;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import org.orecruncher.dsurround.eventing.ClientEventHooks;
 import org.orecruncher.dsurround.eventing.CollectDiagnosticsEvent;
 import org.orecruncher.dsurround.gui.overlay.IDiagnosticPlugin;
 import org.orecruncher.dsurround.lib.events.HandlerPriority;
-import org.orecruncher.dsurround.lib.math.ITimer;
 import org.orecruncher.dsurround.lib.math.TimerEMA;
 import org.orecruncher.dsurround.eventing.ClientState;
 
@@ -39,20 +37,8 @@ public class ClientProfilerPlugin implements IDiagnosticPlugin {
     }
 
     public void onCollect(CollectDiagnosticsEvent event) {
-        var tpsTimer = new ITimer() {
-            @Override
-            public double getMSecs() {
-                return tps;
-            }
-
-            @Override
-            public String toString() {
-                return String.format("Client TPS: %.2f", this.getMSecs());
-            }
-        };
-
-        event.add(tpsTimer);
-        event.add(this.clientTick);
-        event.add(this.lastTick);
+        event.add(CollectDiagnosticsEvent.Section.Systems, String.format("Client TPS: %.2f", this.tps));
+        event.add(CollectDiagnosticsEvent.Section.Systems, this.clientTick.toString());
+        event.add(CollectDiagnosticsEvent.Section.Systems, this.lastTick.toString());
     }
 }

@@ -3,33 +3,33 @@ package org.orecruncher.dsurround.effects.particles;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.orecruncher.dsurround.config.WaterRippleStyle;
 
 public class WaterRippleParticle extends TextureSheetParticle {
-    private final float scale;
-    private float scaledWidth;
+    private final WaterRippleStyle style;
+    private final float startScale;
 
-    protected WaterRippleParticle(ClientLevel level, double x, double y, double z) {
-        super(level, x, y, z);
-
+    public WaterRippleParticle(ClientLevel world, double x, double y, double z, WaterRippleStyle style) {
+        super(world, x, y, z);
+        this.style = style;
+        this.startScale = 0.1F;
+        this.scale = this.startScale;
         this.lifetime = 12;
         this.gravity = 0;
         this.hasPhysics = false;
-        this.scale = 0.3F;
+        this.setPos(x, y, z);
+    }
 
-        if (this.random.nextInt(4) == 0) {
-            this.scale = 0.0F;
-        } else {
-            this.scale = 1.0F;
-        }
-
-        this.setSize(0.2F, 0.2F);
-        this.setColor(1.0F, 1.0F, 1.0F);
-        this.setAlpha(0.4F);
+    @Override
+    public ParticleRenderType getRenderType() {
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @Override
@@ -42,8 +42,8 @@ public class WaterRippleParticle extends TextureSheetParticle {
             this.remove();
         } else {
             float ageRatio = (float) this.age / (float) this.lifetime;
-            this.quadSize = Mth.lerp(ageRatio, 0.0F, this.scale);
-            this.alpha = 0.4F * (1.0F - ageRatio);
+            this.scale = this.startScale * (1.0F + ageRatio * 2.0F);
+            this.alpha = 1.0F - ageRatio;
         }
     }
 
@@ -95,10 +95,5 @@ public class WaterRippleParticle extends TextureSheetParticle {
             .color(this.rCol, this.gCol, this.bCol, this.alpha)
             .uv2(light)
             .endVertex();
-    }
-
-    @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleSheets.WATER_RIPPLE;
     }
 }

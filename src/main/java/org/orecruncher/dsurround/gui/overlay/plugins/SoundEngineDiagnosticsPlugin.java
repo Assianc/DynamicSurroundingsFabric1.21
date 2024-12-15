@@ -33,7 +33,7 @@ public class SoundEngineDiagnosticsPlugin implements IDiagnosticPlugin {
             var volumeSettings = GameUtils.getGameSettings().getSoundSourceVolume(category);
             if (Float.compare(volumeSettings, 0F) == 0) {
                 var text = Component.literal("%s is OFF".formatted(category.name()))
-                    .withStyle(style -> style.withColor(ColorPalette.RED.getRGB()));
+                    .withStyle(style -> style.withColor(0xFF0000));
                 panelText.add(text);
             }
         }
